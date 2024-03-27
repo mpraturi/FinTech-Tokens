@@ -1,0 +1,126 @@
+
+def storage:
+  balanceOf is mapping of uint256 at storage 0
+  allowance is mapping of uint256 at storage 1
+  totalSupply is uint256 at storage 2
+  name is array of uint256 at storage 3
+  symbol is array of uint256 at storage 4
+  decimals is uint8 at storage 5
+  stor6 is mapping of uint8 at storage 6
+
+def name(): # not payable
+  return name[0 len name.length]
+
+def totalSupply(): # not payable
+  return totalSupply
+
+def decimals(): # not payable
+  return decimals
+
+def balanceOf(address _owner): # not payable
+  return balanceOf[addr(_owner)]
+
+def symbol(): # not payable
+  return symbol[0 len symbol.length]
+
+def isMinter(address _account): # not payable
+  require _account
+  return bool(stor6[addr(_account)])
+
+def allowance(address _owner, address _spender): # not payable
+  return allowance[addr(_owner)][addr(_spender)]
+
+#
+#  Regular functions
+#
+
+def _fallback() payable: # default function
+  revert
+
+def INITIAL_SUPPLY(): # not payable
+  return (168083 * 10^decimals)
+
+def renounceMinter(): # not payable
+  require caller
+  require stor6[caller]
+  stor6[caller] = 0
+  log MinterRemoved(address account=caller)
+
+def addMinter(address _minter): # not payable
+  require caller
+  require stor6[caller]
+  require _minter
+  require not stor6[addr(_minter)]
+  stor6[addr(_minter)] = 1
+  log MinterAdded(address account=_minter)
+
+def approve(address _spender, uint256 _value): # not payable
+  require _spender
+  allowance[caller][addr(_spender)] = _value
+  log Approval(
+        address tokenOwner=_value,
+        address spender=caller,
+        uint256 tokens=_spender)
+  return 1
+
+def decreaseAllowance(address _spender, uint256 _subtractedValue): # not payable
+  require _spender
+  require _subtractedValue <= allowance[caller][addr(_spender)]
+  allowance[caller][addr(_spender)] -= _subtractedValue
+  log Approval(
+        address tokenOwner=allowance[caller][addr(_spender)],
+        address spender=caller,
+        uint256 tokens=_spender)
+  return 1
+
+def transfer(address _to, uint256 _value): # not payable
+  require _to
+  require _value <= balanceOf[caller]
+  balanceOf[caller] -= _value
+  require balanceOf[addr(_to)] + _value >= balanceOf[addr(_to)]
+  balanceOf[addr(_to)] += _value
+  log Transfer(
+        address from=_value,
+        address to=caller,
+        uint256 tokens=_to)
+  return 1
+
+def increaseAllowance(address _spender, uint256 _addedValue): # not payable
+  require _spender
+  require allowance[caller][addr(_spender)] + _addedValue >= allowance[caller][addr(_spender)]
+  allowance[caller][addr(_spender)] += _addedValue
+  log Approval(
+        address tokenOwner=allowance[caller][addr(_spender)],
+        address spender=caller,
+        uint256 tokens=_spender)
+  return 1
+
+def mint(address _to, uint256 _amount): # not payable
+  require caller
+  require stor6[caller]
+  require _to
+  require totalSupply + _amount >= totalSupply
+  totalSupply += _amount
+  require balanceOf[addr(_to)] + _amount >= balanceOf[addr(_to)]
+  balanceOf[addr(_to)] += _amount
+  log Transfer(
+        address from=_amount,
+        address to=0,
+        uint256 tokens=_to)
+  return 1
+
+def transferFrom(address _from, address _to, uint256 _value): # not payable
+  require _value <= allowance[addr(_from)][caller]
+  allowance[addr(_from)][caller] -= _value
+  require _to
+  require _value <= balanceOf[addr(_from)]
+  balanceOf[addr(_from)] -= _value
+  require balanceOf[addr(_to)] + _value >= balanceOf[addr(_to)]
+  balanceOf[addr(_to)] += _value
+  log Transfer(
+        address from=_value,
+        address to=_from,
+        uint256 tokens=_to)
+  return 1
+
+
